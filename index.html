@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vangraph</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+</head>
+<body>
+  <header>
+    <h1>Vangraph</h1>
+    <p>Открытый видеохостинг на GitHub Pages</p>
+  </header>
+
+  <main id="app">
+    <div id="loader" class="loader">Загрузка каталога...</div>
+    <div id="error" class="error hidden"></div>
+    <div id="content" class="hidden"></div>
+  </main>
+
+  <dialog id="videoModal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Видео</h2>
+      <button id="closeModal" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-video">
+      <video id="player" controls playsinline preload="metadata"></video>
+    </div>
+    <p id="modalInfo" class="modal-info"></p>
+  </dialog>
+
+  <footer>
+    <p>Vangraph &copy; 2024 | Работает на GitHub Pages</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
