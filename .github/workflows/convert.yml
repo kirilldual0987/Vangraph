@@ -1,0 +1,41 @@
+name: 🎬 Auto-Convert Videos to MP4
+
+on:
+  push:
+    paths:
+      - 'videos/**'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup FFmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v2
+
+      - name: Convert all videos to MP4
+        run: |
+          find videos/ -type f \( -iname "*.mp4" -o -iname "*.webm" -o -iname "*.mkv" -o -iname "*.mov" -o -iname "*.avi" -o -iname "*.flv" \) | while read -r video; do
+            ext="${video##*.}"
+            if [[ "$ext" != "mp4" ]]; then
+              echo "🔄 Converting: $video"
+              ffmpeg -i "$video" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "${video%.*}.mp4" -y
+              rm "$video"
+            fi
+          done
+
+      - name: Commit converted videos
+        run: |
+          git config user.name "vangraph-bot"
+          git config user.email "bot@vangraph.local"
+          git add videos/
+          if git diff --staged --quiet; then
+            echo "✅ No new videos to convert."
+          else
+            git commit -m "🤖 Auto-convert videos to MP4"
+            git push
+          fi
