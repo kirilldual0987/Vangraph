@@ -146,4 +146,67 @@
       
       const response = await fetch(v.url);
       const buffer = await response.arrayBuffer();
-      ffmpeg.FS('writeFile', inputName, new Uint8Array(buffer
+      ffmpeg.FS('writeFile', inputName, new Uint8Array(buffer));
+
+      els.transcodeStatus.textContent = `⏳ Конвертация ${v.ext} → MP4... (может занять время)`;
+      
+      await ffmpeg.run('-i', inputName, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', outputName);
+      
+      const data = ffmpeg.FS('readFile', outputName);
+      const blob = new Blob([data.buffer], { type: 'video/mp4' });
+      const objectUrl = URL.createObjectURL(blob);
+
+      els.transcodeStatus.classList.add('hidden');
+      els.player.classList.remove('hidden');
+      els.player.src = objectUrl;
+      els.modal.showModal();
+      await els.player.play();
+
+      // Очистка
+      ffmpeg.FS('unlink', inputName);
+      ffmpeg.FS('unlink', outputName);
+    } catch (err) {
+      els.transcodeStatus.textContent = `❌ Ошибка конвертации: ${err.message}`;
+      console.error(err);
+    }
+  }
+
+  els.closeModal.addEventListener('click', () => {
+    els.player.pause();
+    els.player.src = '';
+    els.modal.close();
+  });
+
+  els.modal.addEventListener('click', e => { if (e.target === els.modal) els.closeModal.click(); });
+
+  async function load() {
+    try {
+      if (APP.localRepo) {
+        const tree = await fetchRepoTree(APP.localRepo);
+        buildPlaylists(tree, `${APP.localRepo.owner}/${APP.localRepo.repo}`);
+      }
+
+      const res = await fetch('videolist.txt');
+      if (res.ok) {
+        const text = await res.text();
+        for (const line of text.split('\n').filter(l => l.trim())) {
+          const repo = parseRepoUrl(line);
+          if (repo) {
+            try {
+              const tree = await fetchRepoTree(repo);
+              buildPlaylists(tree, `${repo.owner}/${repo.repo}`);
+            } catch (e) { console.warn(e); }
+          }
+        }
+      }
+      render();
+    } catch (err) {
+      els.error.textContent = `Ошибка: ${err.message}`;
+      els.error.classList.remove('hidden');
+    } finally {
+      els.loader.classList.add('hidden');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => { initLocalRepo(); load(); });
+})();
